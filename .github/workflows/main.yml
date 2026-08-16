@@ -25,15 +25,22 @@ jobs:
             libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
             libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
             gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
-            openjdk-17-jdk unzip zip
+            openjdk-17-jdk unzip zip aidl
           pip3 install --user --upgrade buildozer cython virtualenv
 
       - name: Build APK with Buildozer
         run: |
           export PATH=$PATH:~/.local/bin
+          
+          # Automatically accept Android SDK licenses
+          mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
+          echo -e "893547d6f511e11b4d31d36a3d069c13e10b4f34\nd56f5187479451eabf01fb74bf367b9fe3b9db37\n24333f8a63b6825ea9c5514f83c2829b004d1fee" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+          echo -e "849d4d1674cc7443a592a1794bda11d5602fd370" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
+          
           buildozer android debug
-
+          
       - name: Upload Finished APK
         uses: actions/upload-artifact@v4
         with:
           name: AV-App-Installer
+          path: bin/*.apk
