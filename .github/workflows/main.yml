@@ -1,28 +1,40 @@
-name: Build AV App APK
+name: Build App APK
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Build APK with Buildozer
-      uses: ArtemShatalov/buildozer-action@v1
-      with:
-        buildozer_version: stable
-        command: buildozer android debug
-        repository_root: .
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-    - name: Upload Finished APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: AV-App-Installer
-        path: bin/*.apk
+      - name: Install Buildozer Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip build-essential git ffmpeg \
+            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+            libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
+            libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+            openjdk-17-jdk unzip zip
+          pip3 install --user --upgrade buildozer cython virtualenv
 
-        
+      - name: Build APK with Buildozer
+        run: |
+          export PATH=$PATH:~/.local/bin
+          buildozer android debug
+
+      - name: Upload Finished APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AV-App-Installer
+          path: bin/*.apk
