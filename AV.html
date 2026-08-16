@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AV Robot Buddy</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #111; color: #fff; display: flex; flex-direction: column; height: 100vh; }
+        .header { background: #222; padding: 15px; text-align: center; font-size: 22px; font-weight: bold; border-bottom: 2px solid #333; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .logo-emoji { font-size: 28px; }
+        .chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 12px 16px; border-radius: 20px; max-width: 80%; word-wrap: break-word; font-size: 16px; line-height: 1.4; }
+        .user { background: #007bff; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .ai { background: #333; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .input-area { display: flex; padding: 12px; background: #222; gap: 10px; border-top: 1px solid #333; }
+        input { flex: 1; padding: 14px; border: none; border-radius: 25px; background: #444; color: #fff; font-size: 16px; outline: none; }
+        button { background: #28a745; border: none; color: white; padding: 0 22px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:1000; }
+        .modal-content { background:#222; padding:30px; border-radius:20px; text-align:center; border:1px solid #444; width:80%; max-width:350px; }
+        .modal-content h3 { margin-top:0; }
+        .modal-content input { width:90%; margin-bottom:15px; display:block; margin-left:auto; margin-right:auto; }
+    </style>
+</head>
+<body>
+    <div class="modal" id="nameModal">
+        <div class="modal-content">
+            <div class="logo-emoji" style="font-size: 60px; margin-bottom: 10px;">🤖</div>
+            <h3>🤖 Welcome to AV</h3>
+            <p>Please enter your name:</p>
+            <input type="text" id="usernameInput" placeholder="Your Name...">
+            <button onclick="saveName()">Enter</button>
+        </div>
+    </div>
+    <div class="header"><span class="logo-emoji">🤖</span><span id="appHeader">AV Robot Buddy</span></div>
+    <div class="chat-box" id="chat"><div class="msg ai" id="welcomeMessage">Hello! I am AV, your cardboard robot buddy.</div></div>
+    <div class="input-area">
+        <input type="text" id="msgInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter')send()">
+        <button onclick="send()">Send</button>
+    </div>
+    <script>
+        let currentUserName = "User";
+        window.onload = function() {
+            let saved = localStorage.getItem("av_user_name");
+            if(saved) { currentUserName = saved; document.getElementById("nameModal").style.display = "none"; applyUserIdentity(); }
+        }
+        function saveName() {
+            let nameInput = document.getElementById("usernameInput").value.trim();
+            if(!nameInput) nameInput = "Azaan";
+            currentUserName = nameInput;
+            localStorage.setItem("av_user_name", nameInput);
+            document.getElementById("nameModal").style.display = "none";
+            applyUserIdentity();
+        }
+        function applyUserIdentity() {
+            document.getElementById("appHeader").innerText = "Hello " + currentUserName + " | AV";
+            document.getElementById("welcomeMessage").innerText = "Hello " + currentUserName + "! I am AV, your robot buddy. How can I help you? / السلام علیکم " + currentUserName + "! میں اے وی ہوں۔";
+        }
+        async function send() {
+            let input = document.getElementById("msgInput");
+            let text = input.value.trim();
+            if (!text) return;
+            appendMessage(text, 'user');
+            input.value = "";
+            try {
+                let response = await fetch('http://localhost:5000/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: text, username: currentUserName})
+                });
+                let data = await response.json();
+                appendMessage(data.reply, 'ai');
+            } catch (e) {
+                appendMessage("Error communicating with AV backend.", 'ai');
+            }
+        }
+        function appendMessage(text, sender) {
+            let chat = document.getElementById("chat");
+            let msg = document.createElement("div");
+            msg.className = "msg " + sender;
+            msg.innerText = text;
+            chat.appendChild(msg);
+            chat.scrollTop = chat.scrollHeight;
+        }
+    </script>
+</body>
+</html>
