@@ -25,5 +25,3 @@ jobs:
       with:
         name: AV-App-Installer
         path: bin/*.apk
-
-  
